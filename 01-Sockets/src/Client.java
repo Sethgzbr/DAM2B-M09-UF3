@@ -13,7 +13,7 @@ public class Client {
         try {
             socket = new Socket(HOST, PORT);
             out = new PrintWriter(socket.getOutputStream(), true);
-            System.out.println("Client connectat a " + HOST + ":" + PORT);
+            System.out.println("Connectat a servidor en " + HOST + ":" + PORT);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -22,7 +22,7 @@ public class Client {
     public void enviaDades(String dades) {
         try {
             out.println(dades);
-            System.out.println("Dades enviades: " + dades);
+            System.out.println("Enviant al servidor: " + dades);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,7 +45,7 @@ public class Client {
         client.enviaDades("Prova d'enviament 2");
         client.enviaDades("Adeu!");
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Prem Enter per sortir...");
+        System.out.println("Prem Enter per tancar el client...");
         try {
             in.readLine();
         } catch (Exception e) {

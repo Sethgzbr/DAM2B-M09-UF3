@@ -12,9 +12,10 @@ public class Servidor {
     public void conecta() {
         try {
             serverSocket = new ServerSocket(PORT);
-            System.out.println("Servidor iniciat en " + HOST +":"+ PORT);
+            System.out.println("Servidor en marxa a " + HOST +":"+ PORT);
+            System.out.println("Esperant connexions a " + HOST + ":" + PORT);
             socket = serverSocket.accept();
-            System.out.println("Client conectat: " + socket.getInetAddress().getHostAddress());
+            System.out.println("Client conectat: " + socket.getRemoteSocketAddress());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -24,7 +25,7 @@ public class Servidor {
         try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String line;
             while((line = in.readLine()) != null) {
-                System.out.println("Dades rebudes: " + line);
+                System.out.println("Rebut: " + line);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,7 +41,7 @@ public class Servidor {
             e.printStackTrace();
         }
     }
-    
+
     public static void main(String[] args) {
         Servidor servidor = new Servidor();
         servidor.conecta();
