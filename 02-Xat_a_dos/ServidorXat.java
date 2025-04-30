@@ -36,7 +36,7 @@ public class ServidorXat {
         }
     }
 
-    public static void main(String[] args) {
+    public static <FilServidorXat> void main(String[] args) {
         ServidorXat servidor = new ServidorXat();
         servidor.iniciarServidor();
 
@@ -49,7 +49,24 @@ public class ServidorXat {
             String nomClient = servidor.getNom(inputStream);
             System.out.println("Nom del client: " + nomClient);
 
-            FilServidorXat filServidor = new FilServidorXat(clientSocket, inputStream, outputStream);
+            Runnable filServidor = new Runnable() {
+                @Override
+                public void run() {
+                    // Implement the logic for handling the client here
+                    try {
+                        java.util.Scanner scanner = new java.util.Scanner(inputStream);
+                        String message;
+                        while ((message = scanner.nextLine()) != null) {
+                            System.out.println("Missatge del client: " + message);
+                            if (message.equalsIgnoreCase(MSG_SORTIR)) {
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error en el fil del servidor: " + e.getMessage());
+                    }
+                }
+            };
             Thread thread = new Thread(filServidor);
             thread.start();
 
