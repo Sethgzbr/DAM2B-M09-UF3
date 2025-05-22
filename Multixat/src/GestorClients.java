@@ -1,8 +1,9 @@
-package Multixat.src;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class GestorClients extends Thread {
+public class GestorClients implements Runnable {
     private Socket client;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -10,8 +11,8 @@ public class GestorClients extends Thread {
     private String nom;
     private boolean sortir = false;
 
-    public GestorClients(Socket clientSocket, ServidorXat servidor) throws IOException {
-        this.client = clientSocket;
+    public GestorClients(Socket client, ServidorXat servidor) throws IOException {
+        this.client = client;
         this.servidor = servidor;
         out = new ObjectOutputStream(client.getOutputStream());
         in = new ObjectInputStream(client.getInputStream());
@@ -25,31 +26,32 @@ public class GestorClients extends Thread {
     public void run() {
         try {
             while (!sortir) {
-                String missatgeRaw = (String) in.readObject();
-                processaMissatge(missatgeRaw);
+                String msgRaw = (String) in.readObject();
+                processaMissatge(msgRaw);
             }
         } catch (Exception e) {
-            System.out.println("Error en gestor de client: " + e.getMessage());
+            // Client tancat
         } finally {
             try {
                 client.close();
-            } catch (IOException e) { }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public void enviarMissatge(String remitent, String missatge) {
+    public void enviarMissatge(String missatgeRaw) {
         try {
-            String raw = Missatge.getMissatgeGrup(remitent + ": " + missatge);
-            out.writeObject(raw);
+            out.writeObject(missatgeRaw);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void processaMissatge(String missatgeRaw) {
-        String codi = Missatge.getCodiMissatge(missatgeRaw);
-        String[] parts = Missatge.getPartsMissatge(missatgeRaw);
+    private void processaMissatge(String msgRaw) {
+        String codi = Missatge.getCodiMissatge(msgRaw);
+        String[] parts = Missatge.getPartsMissatge(msgRaw);
         if (codi == null || parts == null) return;
 
         switch (codi) {
@@ -58,6 +60,9 @@ public class GestorClients extends Thread {
                 servidor.afegirClient(this);
                 break;
             case Missatge.CODI_SORTIR_CLIENT:
+                // Notifica als altres clients que aquest client (nom) està sortint
+                servidor.enviarMissatgeGrup(Missatge.getMissatgeSortirClient("Adéu"));
+                // Ara tanquem el client que ha demanat sortir
                 sortir = true;
                 servidor.eliminarClient(nom);
                 break;
@@ -67,15 +72,15 @@ public class GestorClients extends Thread {
                 break;
             case Missatge.CODI_MSG_PERSONAL:
                 String dest = parts[1];
-                String msg = parts[2];
-                servidor.enviarMissatgePersonal(dest, nom, msg);
+                String text = parts[2];
+                servidor.enviarMissatgePersonal(dest, nom, text);
                 break;
             case Missatge.CODI_MSG_GRUP:
-                String gm = parts[1];
-                servidor.enviarMissatgeGrup(nom + ": " + gm);
+                String txt = parts[1];
+                servidor.enviarMissatgeGrup(Missatge.getMissatgeGrup(txt));
                 break;
             default:
-                System.out.println("Codi desconegut: " + missatgeRaw);
+                System.out.println("Error: codi desconegut " + codi);
         }
     }
 }
